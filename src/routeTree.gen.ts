@@ -10,11 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MailboxRouteImport } from './routes/mailbox'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
+import { Route as TrackTrackingNumberRouteImport } from './routes/track.$trackingNumber'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MailboxRoute = MailboxRouteImport.update({
+  id: '/mailbox',
+  path: '/mailbox',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PSlugRoute = PSlugRouteImport.update({
@@ -22,31 +29,44 @@ const PSlugRoute = PSlugRouteImport.update({
   path: '/p/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TrackTrackingNumberRoute = TrackTrackingNumberRouteImport.update({
+  id: '/track/$trackingNumber',
+  path: '/track/$trackingNumber',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/mailbox': typeof MailboxRoute
   '/p/$slug': typeof PSlugRoute
+  '/track/$trackingNumber': typeof TrackTrackingNumberRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/mailbox': typeof MailboxRoute
   '/p/$slug': typeof PSlugRoute
+  '/track/$trackingNumber': typeof TrackTrackingNumberRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/mailbox': typeof MailboxRoute
   '/p/$slug': typeof PSlugRoute
+  '/track/$trackingNumber': typeof TrackTrackingNumberRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/p/$slug'
+  fullPaths: '/' | '/mailbox' | '/p/$slug' | '/track/$trackingNumber'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/p/$slug'
-  id: '__root__' | '/' | '/p/$slug'
+  to: '/' | '/mailbox' | '/p/$slug' | '/track/$trackingNumber'
+  id: '__root__' | '/' | '/mailbox' | '/p/$slug' | '/track/$trackingNumber'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  MailboxRoute: typeof MailboxRoute
   PSlugRoute: typeof PSlugRoute
+  TrackTrackingNumberRoute: typeof TrackTrackingNumberRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -58,6 +78,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mailbox': {
+      id: '/mailbox'
+      path: '/mailbox'
+      fullPath: '/mailbox'
+      preLoaderRoute: typeof MailboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/p/$slug': {
       id: '/p/$slug'
       path: '/p/$slug'
@@ -65,12 +92,21 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/track/$trackingNumber': {
+      id: '/track/$trackingNumber'
+      path: '/track/$trackingNumber'
+      fullPath: '/track/$trackingNumber'
+      preLoaderRoute: typeof TrackTrackingNumberRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  MailboxRoute: MailboxRoute,
   PSlugRoute: PSlugRoute,
+  TrackTrackingNumberRoute: TrackTrackingNumberRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
