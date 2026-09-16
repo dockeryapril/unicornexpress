@@ -136,7 +136,7 @@ function extFor(blob: Blob, fallback: string) {
 async function uploadTo(slug: string, kind: string, blob: Blob, fallbackExt: string) {
   const path = `${slug}/${kind}.${extFor(blob, fallbackExt)}`;
   const { error } = await supabase.storage.from("postcards").upload(path, blob, {
-    contentType: blob.type || undefined,
+    contentType: blob.type || "application/octet-stream",
     upsert: true,
   });
   if (error) throw new Error(error.message);
