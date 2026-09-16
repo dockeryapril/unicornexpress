@@ -9,7 +9,10 @@ type FrontProps = {
   stickers: Sticker[];
   onMoveSticker?: ((id: string, x: number, y: number) => void) | undefined;
   onRemoveSticker?: ((id: string) => void) | undefined;
+  onSelectSticker?: ((id: string) => void) | undefined;
+  selectedStickerId?: string | null;
   children?: React.ReactNode | undefined;
+  fill?: boolean;
 };
 
 export function PostcardFront({
@@ -19,7 +22,10 @@ export function PostcardFront({
   stickers,
   onMoveSticker,
   onRemoveSticker,
+  onSelectSticker,
+  selectedStickerId,
   children,
+  fill = false,
 }: FrontProps) {
   const areaRef = useRef<HTMLDivElement>(null);
 
@@ -47,9 +53,16 @@ export function PostcardFront({
   }
 
   return (
-    <div className={`postcard-surface overflow-hidden rounded-[14px] ${template.cardClass}`}>
+    <div
+      className={`postcard-surface overflow-hidden rounded-[14px] ${template.cardClass} ${
+        fill ? "flex size-full flex-col" : ""
+      }`}
+    >
       <AirmailEdge edge={template.edge} />
-      <div ref={areaRef} className="relative aspect-3/2 w-full touch-none overflow-hidden">
+      <div
+        ref={areaRef}
+        className={`relative w-full touch-none overflow-hidden ${fill ? "min-h-0 flex-1" : "aspect-3/2"}`}
+      >
         {photoUrl ? (
           <img
             src={photoUrl}
@@ -77,6 +90,10 @@ export function PostcardFront({
             key={s.id}
             type="button"
             onPointerDown={(e) => startDrag(e, s.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelectSticker?.(s.id);
+            }}
             onDoubleClick={() => onRemoveSticker?.(s.id)}
             className={`absolute grid -translate-x-1/2 -translate-y-1/2 place-items-center text-[30px] leading-none select-none ${
               onMoveSticker ? "cursor-grab active:cursor-grabbing" : "pointer-events-none"
@@ -88,6 +105,9 @@ export function PostcardFront({
             }}
             aria-label={`Sticker ${s.char}`}
           >
+            {selectedStickerId === s.id && (
+              <span className="pointer-events-none absolute -inset-2 rounded-md border border-dashed border-cream drop-shadow" />
+            )}
             {s.char}
           </button>
         ))}
@@ -107,6 +127,7 @@ type BackProps = {
   note: string;
   createdAt?: string;
   stamped?: boolean;
+  fill?: boolean;
 };
 
 export function PostcardBack({
@@ -117,11 +138,16 @@ export function PostcardBack({
   note,
   createdAt,
   stamped = true,
+  fill = false,
 }: BackProps) {
   return (
-    <div className={`postcard-surface overflow-hidden rounded-[14px] ${template.cardClass}`}>
+    <div
+      className={`postcard-surface overflow-hidden rounded-[14px] ${template.cardClass} ${
+        fill ? "flex size-full flex-col" : ""
+      }`}
+    >
       <AirmailEdge edge={template.edge} />
-      <div className="p-4">
+      <div className={`p-4 ${fill ? "min-h-0 flex-1" : ""}`}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <p className={`font-hand text-[30px] leading-[0.98] break-words ${template.handClass}`}>

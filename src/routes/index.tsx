@@ -4,6 +4,7 @@ import { StepRail } from "@/components/postal/StepRail";
 import { PostcardBack, PostcardFront } from "@/components/postal/PostcardFace";
 import { DrawLayer, type DrawLayerHandle } from "@/components/postal/DrawLayer";
 import { VoiceRecorder } from "@/components/postal/VoiceRecorder";
+import { Postcard3DViewer } from "@/components/postal/Postcard3DViewer";
 import {
   STICKERS,
   TEMPLATES,
@@ -48,7 +49,9 @@ function Studio() {
   const [drawing, setDrawing] = useState<string | null>(null);
   const [inkColor, setInkColor] = useState("#E24A32");
   const [inkSize, setInkSize] = useState(8);
+  const [drawMode, setDrawMode] = useState<"pen" | "eraser">("pen");
   const [stickers, setStickers] = useState<Sticker[]>([]);
+  const [selectedStickerId, setSelectedStickerId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [sender, setSender] = useState("");
   const [recipient, setRecipient] = useState("");
@@ -85,10 +88,11 @@ function Studio() {
   }
 
   function addSticker(char: string) {
+    const id = crypto.randomUUID();
     setStickers((prev) => [
       ...prev,
       {
-        id: crypto.randomUUID(),
+        id,
         char,
         x: 30 + Math.random() * 40,
         y: 30 + Math.random() * 35,
@@ -96,6 +100,7 @@ function Studio() {
         scale: 1,
       },
     ]);
+    setSelectedStickerId(id);
     setFace("front");
   }
 
@@ -105,6 +110,11 @@ function Studio() {
 
   function removeSticker(id: string) {
     setStickers((prev) => prev.filter((s) => s.id !== id));
+    setSelectedStickerId((current) => (current === id ? null : current));
+  }
+
+  function transformSticker(id: string, changes: Pick<Sticker, "rot" | "scale">) {
+    setStickers((prev) => prev.map((s) => (s.id === id ? { ...s, ...changes } : s)));
   }
 
   async function handleSend() {
@@ -143,35 +153,42 @@ function Studio() {
     }
   }
 
-  const canvasFace =
-    face === "front" ? (
-      <PostcardFront
-        template={tpl}
-        photoUrl={photoUrl}
-        drawingUrl={step === 1 && tool === "draw" ? null : drawing}
-        stickers={stickers}
-        onMoveSticker={step === 1 && tool === "stickers" ? moveSticker : undefined}
-        onRemoveSticker={step === 1 && tool === "stickers" ? removeSticker : undefined}
-      >
-        {step === 1 && tool === "draw" && (
-          <DrawLayer
-            color={inkColor}
-            size={inkSize}
-            enabled
-            onChange={setDrawing}
-            registerHandle={registerHandle}
-          />
-        )}
-      </PostcardFront>
-    ) : (
-      <PostcardBack
-        template={tpl}
-        message={message}
-        sender={sender}
-        recipient={recipient}
-        note={note}
-      />
-    );
+  const editingSurface = step === 1 && (tool === "draw" || tool === "stickers");
+  const postcardFront = (
+    <PostcardFront
+      fill
+      template={tpl}
+      photoUrl={photoUrl}
+      drawingUrl={step === 1 && tool === "draw" ? null : drawing}
+      stickers={stickers}
+      onMoveSticker={step === 1 && tool === "stickers" ? moveSticker : undefined}
+      onRemoveSticker={step === 1 && tool === "stickers" ? removeSticker : undefined}
+      onSelectSticker={step === 1 && tool === "stickers" ? setSelectedStickerId : undefined}
+      selectedStickerId={step === 1 && tool === "stickers" ? selectedStickerId : null}
+    >
+      {step === 1 && tool === "draw" && (
+        <DrawLayer
+          color={inkColor}
+          size={inkSize}
+          mode={drawMode}
+          initialDataUrl={drawing}
+          enabled
+          onChange={setDrawing}
+          registerHandle={registerHandle}
+        />
+      )}
+    </PostcardFront>
+  );
+  const postcardBack = (
+    <PostcardBack
+      fill
+      template={tpl}
+      message={message}
+      sender={sender}
+      recipient={recipient}
+      note={note}
+    />
+  );
 
   return (
     <div className="papergrain relative mx-auto flex min-h-screen w-full max-w-[430px] flex-col bg-background">
@@ -183,7 +200,13 @@ function Studio() {
         <div className="card-in relative">
           <span className="absolute -top-1.5 left-6 z-10 size-7 -rotate-6 rounded-full bg-accent/85 shadow-sm" />
           <span className="absolute -top-1.5 right-6 z-10 size-7 rotate-6 rounded-full bg-navy/85 shadow-sm" />
-          {canvasFace}
+          <Postcard3DViewer
+            front={postcardFront}
+            back={postcardBack}
+            face={face}
+            interactionLocked={editingSurface}
+            onFaceChange={setFace}
+          />
         </div>
 
         <button
@@ -229,9 +252,7 @@ function Studio() {
                     type="button"
                     onClick={() => setTemplate(t.id)}
                     className={`rounded-[14px] px-3 py-3 text-left ${
-                      template === t.id
-                        ? "bg-ink text-cream"
-                        : "tool-chip text-foreground"
+                      template === t.id ? "bg-ink text-cream" : "tool-chip text-foreground"
                     }`}
                   >
                     <p className="font-display text-[12px] tracking-tight">{t.name}</p>
@@ -295,9 +316,7 @@ function Studio() {
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <label className="block">
-                    <span className="font-mono text-[9px] tracking-[0.18em] text-inkmuted">
-                      TO
-                    </span>
+                    <span className="font-mono text-[9px] tracking-[0.18em] text-inkmuted">TO</span>
                     <input
                       value={recipient}
                       onChange={(e) => setRecipient(e.target.value)}
@@ -318,9 +337,7 @@ function Studio() {
                   </label>
                 </div>
                 <label className="block">
-                  <span className="font-mono text-[9px] tracking-[0.18em] text-inkmuted">
-                    P.S.
-                  </span>
+                  <span className="font-mono text-[9px] tracking-[0.18em] text-inkmuted">P.S.</span>
                   <input
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
@@ -361,10 +378,33 @@ function Studio() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => drawHandle.current?.clear()}
-                  className="font-mono text-[10px] tracking-[0.14em] text-accent underline"
+                  onClick={() => setDrawMode(drawMode === "pen" ? "eraser" : "pen")}
+                  className={`rounded-full px-3 py-2 font-mono text-[9px] tracking-[0.12em] ${
+                    drawMode === "eraser" ? "bg-ink text-cream" : "border border-line"
+                  }`}
                 >
-                  CLEAR INK
+                  {drawMode === "eraser" ? "ERASER ON" : "ERASER"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => drawHandle.current?.undo()}
+                  className="rounded-full border border-line px-3 py-2 font-mono text-[9px] tracking-[0.12em]"
+                >
+                  UNDO
+                </button>
+                <button
+                  type="button"
+                  onClick={() => drawHandle.current?.redo()}
+                  className="rounded-full border border-line px-3 py-2 font-mono text-[9px] tracking-[0.12em]"
+                >
+                  REDO
+                </button>
+                <button
+                  type="button"
+                  onClick={() => drawHandle.current?.clear()}
+                  className="rounded-full px-2 py-2 font-mono text-[9px] tracking-[0.12em] text-accent underline"
+                >
+                  CLEAR
                 </button>
               </div>
             )}
@@ -386,6 +426,59 @@ function Studio() {
                     </button>
                   ))}
                 </div>
+                {selectedStickerId &&
+                  (() => {
+                    const selected = stickers.find((sticker) => sticker.id === selectedStickerId);
+                    if (!selected) return null;
+                    return (
+                      <div className="grid grid-cols-[1fr_1fr_auto] items-end gap-3 border-t border-line pt-3">
+                        <label>
+                          <span className="font-mono text-[8px] tracking-[0.12em] text-inkmuted">
+                            SIZE
+                          </span>
+                          <input
+                            type="range"
+                            min={0.55}
+                            max={2.2}
+                            step={0.05}
+                            value={selected.scale}
+                            onChange={(event) =>
+                              transformSticker(selected.id, {
+                                rot: selected.rot,
+                                scale: Number(event.target.value),
+                              })
+                            }
+                            className="block w-full accent-accent"
+                          />
+                        </label>
+                        <label>
+                          <span className="font-mono text-[8px] tracking-[0.12em] text-inkmuted">
+                            ROTATE
+                          </span>
+                          <input
+                            type="range"
+                            min={-180}
+                            max={180}
+                            value={selected.rot}
+                            onChange={(event) =>
+                              transformSticker(selected.id, {
+                                rot: Number(event.target.value),
+                                scale: selected.scale,
+                              })
+                            }
+                            className="block w-full accent-accent"
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => removeSticker(selected.id)}
+                          className="rounded-full border border-line px-3 py-2 font-mono text-[9px] text-accent"
+                        >
+                          DELETE
+                        </button>
+                      </div>
+                    );
+                  })()}
               </div>
             )}
 
@@ -424,8 +517,7 @@ function Studio() {
                     <li>Ink drawing · {drawing ? "added" : "none"}</li>
                     <li>Stickers · {stickers.length}</li>
                     <li>
-                      Voice note ·{" "}
-                      {audio ? `0:${String(audioSeconds).padStart(2, "0")}` : "none"}
+                      Voice note · {audio ? `0:${String(audioSeconds).padStart(2, "0")}` : "none"}
                     </li>
                   </ul>
                 </div>
@@ -446,9 +538,7 @@ function Studio() {
             ) : (
               <>
                 <div className="tool-chip rounded-[14px] p-3.5">
-                  <p className="font-mono text-[9px] tracking-[0.18em] text-inkmuted">
-                    SHARE LINK
-                  </p>
+                  <p className="font-mono text-[9px] tracking-[0.18em] text-inkmuted">SHARE LINK</p>
                   <p className="mt-1 break-all font-mono text-[12px]">{shareUrl}</p>
                   <div className="mt-3 flex gap-2">
                     <button
@@ -499,12 +589,7 @@ function Studio() {
                 }}
               />
             ) : (
-              <DockButton
-                glyph="＋"
-                label="NEW"
-                accent
-                onClick={() => window.location.reload()}
-              />
+              <DockButton glyph="＋" label="NEW" accent onClick={() => window.location.reload()} />
             )}
           </div>
         </div>
@@ -549,9 +634,7 @@ function DockButton({
       }`}
     >
       <span className="text-[19px] leading-none">{glyph}</span>
-      <span
-        className={`font-mono text-[8px] tracking-wide ${accent ? "" : "text-cream/70"}`}
-      >
+      <span className={`font-mono text-[8px] tracking-wide ${accent ? "" : "text-cream/70"}`}>
         {label}
       </span>
     </button>

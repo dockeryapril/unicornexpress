@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { PostcardBack, PostcardFront } from "@/components/postal/PostcardFace";
 import { formatPostmark, loadPostcard, templateById } from "@/lib/postcard";
 import { useState } from "react";
+import { Postcard3DViewer } from "@/components/postal/Postcard3DViewer";
 
 export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
@@ -12,10 +13,7 @@ export const Route = createFileRoute("/p/$slug")({
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
-        meta: [
-          { title: "Postcard not found — Paravoy" },
-          { name: "robots", content: "noindex" },
-        ],
+        meta: [{ title: "Postcard not found — Paravoy" }, { name: "robots", content: "noindex" }],
       };
     }
     const from = loaderData.sender || "someone";
@@ -62,6 +60,7 @@ function SharedPostcard() {
   const card = Route.useLoaderData();
   const tpl = templateById(card.template);
   const [copied, setCopied] = useState(false);
+  const [face, setFace] = useState<"front" | "back">("front");
 
   async function copy() {
     await navigator.clipboard.writeText(window.location.href);
@@ -84,22 +83,40 @@ function SharedPostcard() {
         <div className="card-in relative">
           <span className="no-print absolute -top-1.5 left-6 z-10 size-7 -rotate-6 rounded-full bg-accent/85" />
           <span className="no-print absolute -top-1.5 right-6 z-10 size-7 rotate-6 rounded-full bg-navy/85" />
-          <PostcardFront
-            template={tpl}
-            photoUrl={card.photoUrl}
-            drawingUrl={card.drawingUrl}
-            stickers={card.stickers}
+          <Postcard3DViewer
+            tapToFlip
+            face={face}
+            onFaceChange={setFace}
+            front={
+              <PostcardFront
+                fill
+                template={tpl}
+                photoUrl={card.photoUrl}
+                drawingUrl={card.drawingUrl}
+                stickers={card.stickers}
+              />
+            }
+            back={
+              <PostcardBack
+                fill
+                template={tpl}
+                message={card.message}
+                sender={card.sender}
+                recipient={card.recipient}
+                note={card.note}
+                createdAt={card.created_at}
+              />
+            }
           />
         </div>
 
-        <PostcardBack
-          template={tpl}
-          message={card.message}
-          sender={card.sender}
-          recipient={card.recipient}
-          note={card.note}
-          createdAt={card.created_at}
-        />
+        <button
+          type="button"
+          onClick={() => setFace(face === "front" ? "back" : "front")}
+          className="no-print w-full font-mono text-[9px] tracking-[0.18em] text-inkmuted"
+        >
+          DRAG OR TAP TO TURN · SHOWING {face === "front" ? "PICTURE SIDE" : "WRITING SIDE"}
+        </button>
 
         {card.audioUrl && (
           <div className="tool-chip rounded-[14px] p-3.5">
