@@ -14,7 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      postcards: {
+        Row: {
+          audio_path: string | null
+          created_at: string
+          drawing_path: string | null
+          id: string
+          message: string
+          note: string
+          photo_path: string | null
+          recipient: string
+          sender: string
+          slug: string
+          stickers: Json
+          template: string
+        }
+        Insert: {
+          audio_path?: string | null
+          created_at?: string
+          drawing_path?: string | null
+          id?: string
+          message?: string
+          note?: string
+          photo_path?: string | null
+          recipient?: string
+          sender?: string
+          slug: string
+          stickers?: Json
+          template?: string
+        }
+        Update: {
+          audio_path?: string | null
+          created_at?: string
+          drawing_path?: string | null
+          id?: string
+          message?: string
+          note?: string
+          photo_path?: string | null
+          recipient?: string
+          sender?: string
+          slug?: string
+          stickers?: Json
+          template?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
