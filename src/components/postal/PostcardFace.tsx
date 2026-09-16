@@ -7,9 +7,9 @@ type FrontProps = {
   photoUrl: string | null;
   drawingUrl: string | null;
   stickers: Sticker[];
-  onMoveSticker?: (id: string, x: number, y: number) => void;
-  onRemoveSticker?: (id: string) => void;
-  children?: React.ReactNode;
+  onMoveSticker?: ((id: string, x: number, y: number) => void) | undefined;
+  onRemoveSticker?: ((id: string) => void) | undefined;
+  children?: React.ReactNode | undefined;
 };
 
 export function PostcardFront({
