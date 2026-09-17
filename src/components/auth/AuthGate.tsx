@@ -61,7 +61,7 @@ export function AuthGate({ children, heading = "Your postcards need a return add
           </div>
           <h1 className="mt-5 font-display text-[23px] leading-tight tracking-tight">{heading}</h1>
           <p className="mt-2 text-[13px] leading-relaxed text-inkmuted">
-            Sign in by email so mailed postcards can leave your possession and arrive privately.
+            Enter your email to securely send, track, and receive postcards.
           </p>
 
           {sent ? (
@@ -99,7 +99,7 @@ export function AuthGate({ children, heading = "Your postcards need a return add
                 type="submit"
                 className="w-full rounded-[12px] bg-ink py-3.5 text-[13px] font-semibold text-cream"
               >
-                Send private sign-in link
+                Email me a sign-in link
               </button>
             </form>
           )}
