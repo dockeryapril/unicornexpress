@@ -132,7 +132,10 @@ export function Postcard3DViewer({
   }, [face]);
 
   return (
-    <div className={`relative aspect-3/2 w-full [perspective:1100px] ${className}`}>
+    <div
+      className={`relative aspect-3/2 w-full ${className}`}
+      style={{ perspective: "1100px", WebkitPerspective: "1100px" }}
+    >
       <div
         role="group"
         aria-label="Interactive postcard. Drag to turn it over."
@@ -141,19 +144,41 @@ export function Postcard3DViewer({
         onPointerUp={releasePointer}
         onPointerCancel={releasePointer}
         onDoubleClick={flip}
-        className={`relative size-full touch-none select-none [transform-style:preserve-3d] ${
+        className={`relative size-full touch-none select-none ${
           interactionLocked ? "" : dragging ? "cursor-grabbing" : "cursor-grab"
         }`}
         style={{
           transform: `rotateX(${rotationX}deg) rotateY(${rotationY}deg)`,
+          WebkitTransform: `rotateX(${rotationX}deg) rotateY(${rotationY}deg)`,
+          transformStyle: "preserve-3d",
+          WebkitTransformStyle: "preserve-3d",
+          willChange: "transform",
           transition: dragging ? "none" : "transform 620ms cubic-bezier(0.2, 0.9, 0.25, 1.12)",
           filter: dragging
             ? "drop-shadow(0 24px 20px rgba(34, 27, 20, 0.2))"
             : "drop-shadow(0 14px 14px rgba(34, 27, 20, 0.13))",
         }}
       >
-        <div className="absolute inset-0 [backface-visibility:hidden]">{front}</div>
-        <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]">
+        <div
+          className="absolute inset-0"
+          style={{
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+            transform: "rotateY(0deg) translateZ(0.1px)",
+            WebkitTransform: "rotateY(0deg) translateZ(0.1px)",
+          }}
+        >
+          {front}
+        </div>
+        <div
+          className="absolute inset-0"
+          style={{
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+            transform: "rotateY(180deg) translateZ(0.1px)",
+            WebkitTransform: "rotateY(180deg) translateZ(0.1px)",
+          }}
+        >
           {back}
         </div>
       </div>
